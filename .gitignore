@@ -1,0 +1,4 @@
+.env
+new.db
+.venv
+__pycache__
