@@ -21,6 +21,7 @@ async def db_start():
                         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
                         amount REAL,
                         user_id TEXT
+                        category_id INTEGER
                     )
                 ''')
         
@@ -47,10 +48,14 @@ async def add_user(user_id, name):
 async def add_record(user_id, amount, category):
     print('ADD RECORD', user_id, amount, category)
     try:
+        category_id = cur.execute("SELECT 1 FROM categories where name == '{key}'".format(key=category)).fetchone()[0]
+
+        print('category', category_id)
+
         cur.execute('''
-                    INSERT INTO records(amount, user_id) 
-                    VALUES (?,?)
-                ''', (amount, user_id))
+                    INSERT INTO records(amount, user_id, category_id) 
+                    VALUES (?,?,?)
+                ''', (amount, user_id, category_id))
         db.commit()
         
     except sq.Error as e:
