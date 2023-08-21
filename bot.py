@@ -10,9 +10,13 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.callback_data import CallbackData
 
 from core.handlers.start import start_handler
+from core.handlers.amount import amount_callback_handler
+from core.handlers.analytics import analytics_callback_handler
 
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters.state import State, StatesGroup
 
-from sqlite import db_start, add_user, add_record, get_records_month, get_categories
+from core.utils.sqlite import db_start, add_user, add_record, get_records_month, get_categories
 
 load_dotenv()
 
@@ -21,7 +25,6 @@ PROXY_URL = os.getenv('PROXY_URL')
 
 # 
 # подумать, как совмещать инлайн клавиатуру и ввод суммы денег
-# 
 # 
 
 storage = MemoryStorage()
@@ -32,22 +35,17 @@ dp = Dispatcher(bot=bot, storage=storage)
 cb_action = CallbackData('main', 'action')
 cb_category = CallbackData('main', 'category')
 
+class ClientStates(StatesGroup):
+    default = State()
+    amount = State()
+    category = State()
+    analytics = State()
+
 async def on_startup(_):
     await db_start()
 
-    dp.register_message_handler(start_handler, commands=['start'])
-    
 
 ### keyboards ###
-def get_main_keyboard() -> InlineKeyboardMarkup:
-    ikb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text='Button 1', callback_data=cb_action.new('amount'))],
-        [InlineKeyboardButton(text='Button 2', callback_data=cb_action.new('analytics'))]
-    ])
-
-    return ikb
-
-
 def get_category_keyboard(categories) -> InlineKeyboardMarkup:
     ikb = InlineKeyboardMarkup(row_width=3)
 
@@ -62,25 +60,23 @@ def get_category_keyboard(categories) -> InlineKeyboardMarkup:
     
     return ikb
 
+
+@dp.message_handler()
+async def main_handler(message: types.Message):
+    text = message.text
+
+    if text == '/start':
+         await start_handler(message, cb = cb_action)
+
+
 ### common handlers ###
-# @dp.message_handler(commands=['start'])
-# async def start_handler(message: types.Message) -> None:
-    
-#     await message.reply('Выберите пункт', reply_markup=get_main_keyboard())
-#     await add_user(message.from_user.id, message.from_user.full_name)
-
-
 @dp.callback_query_handler(cb_action.filter(action='amount'))
-async def main_callback_handler(callback: types.CallbackQuery, callback_data: dict):
-
-    categories = await get_categories()
-    await bot.send_message(callback.from_user.id, 'Hello World', reply_markup=get_category_keyboard(categories))
-    await callback.answer()
-
+async def amount_handler(callback: types.CallbackQuery):
+    await amount_callback_handler(callback, bot, cb_instance = cb_category)
 
 @dp.callback_query_handler(cb_action.filter(action='analytics'))
-async def main_callback_handler(callback: types.CallbackQuery, callback_data: dict):
-        await callback.answer('Analytics')
+async def analytics_handler(callback: types.CallbackQuery, callback_data: dict):
+    await analytics_callback_handler(callback, callback_data)
 
 @dp.callback_query_handler(cb_category.filter())
 async def category_callback_handler(callback: types.CallbackQuery, callback_data: dict):
