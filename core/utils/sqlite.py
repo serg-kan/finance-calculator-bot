@@ -39,6 +39,7 @@ async def db_start():
         print ('Error occured')
 
 async def add_user(user_id, name):
+    print('add user', user_id, name)
     user = cur.execute("SELECT 1 FROM users where user_id == '{key}'".format(key=user_id)).fetchone()
 
     if not user:
@@ -65,6 +66,7 @@ async def add_record(user_id, amount, category):
 async def get_records_month(user_id):
     month = datetime.now().month
     month_str = '0' + str(month) if month < 10 else str(month)
+    print('get_record_Month', month_str)
 
     try:
         total = cur.execute('''

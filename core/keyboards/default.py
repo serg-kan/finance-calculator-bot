@@ -1,9 +1,11 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-def get_default_keyboard(cb) -> InlineKeyboardMarkup:
+from ..utils.callback_action import ActionInfo
+
+def get_default_keyboard() -> InlineKeyboardMarkup:
     ikb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text='Button 1', callback_data=cb.new('amount'))],
-        [InlineKeyboardButton(text='Button 2', callback_data=cb.new('analytics'))]
+        [InlineKeyboardButton(text='Добавить запись', callback_data=ActionInfo(foo='amount').pack())],
+        [InlineKeyboardButton(text='Аналитика', callback_data=ActionInfo(foo='analytics').pack())]
     ])
 
     return ikb
